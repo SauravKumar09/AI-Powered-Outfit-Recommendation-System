@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <div class="card">
+    <h1>Upload products spreadsheet</h1>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <p>
+        <label for="id_file">Excel file (.xlsx):</label>
+        <input type="file" name="file" id="id_file" accept=".xlsx,.xls" />
+      </p>
+      <p>
+        <button type="submit" class="default">Upload</button>
+        <a href="..">Cancel</a>
+      </p>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,251 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # Django Backend API
+  # ===========================================
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: outfit_api
+    command: >
+      sh -c "
+        echo 'Waiting for Redis...' &&
+        while ! nc -z redis 6379; do sleep 1; done &&
+        echo 'Redis is ready!' &&
+        python manage.py migrate --noinput &&
+        python manage.py seed_products &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - logs_volume:/app/logs
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=backend.settings
+      - DATABASE_URL=postgres://aagamfashion@host.docker.internal:5432/ai_power_outfit
+      - REDIS_URL=redis://redis:6379/0
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,web,host.docker.internal
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost,http://frontend
+      - SECRET_KEY=your-super-secret-key-change-in-production-12345
+      - CACHE_TTL=300
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - outfit_network
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ===========================================
+  # React Frontend
+  # ===========================================
+  frontend:
+    build:
+      context: ./outfit-frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=http://localhost:8000/api
+    container_name: outfit_frontend
+    ports:
+      - "3000:4173"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - outfit_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4173/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===========================================
+  # Redis Cache
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: outfit_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - outfit_network
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis_data:
+    driver: local
+  static_volume:
+    driver: local
+  logs_volume:
+    driver: local
+
+networks:
+  outfit_network:
+    driver: bridge
+
+# version: '3.8'
+
+# services:
+#   # ===========================================
+#   # Django Backend API
+#   # ===========================================
+#   web:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     container_name: outfit_recommendation_api
+#     command: >
+#       sh -c "python manage.py migrate &&
+#              python manage.py seed_products --skip-if-exists &&
+#              python manage.py runserver 0.0.0.0:8000"
+#     volumes:
+#       - .:/app
+#       - static_volume:/app/staticfiles
+#     ports:
+#       - "8000:8000"
+#     environment:
+#       - DEBUG=1
+#       - DJANGO_SETTINGS_MODULE=backend.settings
+#       - DATABASE_URL=postgres://aagamfashion@host.docker.internal:5432/ai_power_outfit
+#       - REDIS_URL=redis://redis:6379/0
+#       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,host.docker.internal
+#       - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+#       - SECRET_KEY=your-secret-key-change-in-production-12345
+#       - CACHE_TTL=300
+#     depends_on:
+#       redis:
+#         condition: service_healthy
+#     networks:
+#       - outfit_network
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+#       start_period: 40s
+#     extra_hosts:
+#       - "host.docker.internal:host-gateway"
+
+#   # ===========================================
+#   # React Frontend
+#   # ===========================================
+#   frontend:
+#     build:
+#       context: ./outfit-frontend
+#       dockerfile: Dockerfile
+#     container_name: outfit_frontend
+#     ports:
+#       - "3000:80"
+#     environment:
+#       - VITE_API_BASE_URL=http://localhost:8000/api
+#     depends_on:
+#       web:
+#         condition: service_healthy
+#     networks:
+#       - outfit_network
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:80"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+
+#   # ===========================================
+#   # Redis Cache
+#   # ===========================================
+#   redis:
+#     image: redis:7-alpine
+#     container_name: outfit_redis
+#     ports:
+#       - "6379:6379"
+#     volumes:
+#       - redis_data:/data
+#     networks:
+#       - outfit_network
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "redis-cli", "ping"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     command: redis-server --appendonly yes
+
+# volumes:
+#   redis_data:
+#   static_volume:
+
+# networks:
+#   outfit_network:
+#     driver: bridge
+
+# # version: '3.8'
+
+# # services:
+# #   # Django Web Application
+# #   web:
+# #     build:
+# #       context: .
+# #       dockerfile: Dockerfile
+# #     container_name: outfit_recommendation_api
+# #     command: >
+# #       sh -c "python manage.py migrate &&
+# #              python manage.py seed_products &&
+# #              python manage.py runserver 0.0.0.0:8000"
+# #     volumes:
+# #       - .:/app
+# #     ports:
+# #       - "8000:8000"
+# #     environment:
+# #       - DEBUG=1
+# #       - DJANGO_SETTINGS_MODULE=backend.settings
+# #       - DATABASE_URL=postgres://aagamfashion@host.docker.internal:5432/ai_power_outfit
+# #       - REDIS_URL=redis://redis:6379/0
+# #     depends_on:
+# #       - redis
+# #     networks:
+# #       - outfit_network
+# #     restart: unless-stopped
+
+# #   # Redis for Caching
+# #   redis:
+# #     image: redis:7-alpine
+# #     container_name: outfit_redis
+# #     ports:
+# #       - "6379:6379"
+# #     volumes:
+# #       - redis_data:/data
+# #     networks:
+# #       - outfit_network
+# #     restart: unless-stopped
+
+
+# # volumes:
+# #   redis_data:
+
+# # networks:
+# #   outfit_network:
+# #     driver: bridge

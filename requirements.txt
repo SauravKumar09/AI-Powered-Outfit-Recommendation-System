@@ -1,0 +1,43 @@
+# Django
+Django==4.2.7
+djangorestframework==3.14.0
+
+# Database
+psycopg2-binary==2.9.9
+dj-database-url==2.1.0
+djangorestframework-simplejwt==5.5.1
+
+# Caching
+django-redis==5.4.0
+redis==5.0.1
+
+# CORS
+django-cors-headers==4.3.0
+
+# Environment variables
+python-dotenv==1.0.0
+
+# API Documentation
+drf-spectacular==0.26.5
+
+# Filtering support for Django REST Framework
+django-filter==23.2
+
+# Excel parsing
+openpyxl==3.1.2
+
+# Performance
+gunicorn==21.2.0
+ 
+# Swagger/OpenAPI generator
+drf-yasg==1.21.14
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+pytest-cov==4.1.0
+
+# Code quality
+flake8==6.1.0
+black==23.11.0
+isort==5.12.0
