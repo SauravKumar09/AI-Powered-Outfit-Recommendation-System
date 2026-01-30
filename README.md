@@ -5,7 +5,10 @@ An intelligent fashion recommendation engine with a Django REST API and a React 
 ## Features
 - Product ingestion and enrichment with color, style, season, and occasion tagging
 - Recommendation service for complementary outfits
-- Redis-backed caching for faster responses
+-![WhatsApp Image 2026-01-30 at 22 31 38](https://github.com/user-attachments/assets/fe89f510-e811-4aa6-a6f8-c4f461c08eea)
+![WhatsApp Image 2026-01-30 at 22 30 45](https://github.com/user-attachments/assets/94ffc8e3-717b-44ff-8caf-eec5f0944028)
+![WhatsApp Image 2026-01-30 at 22 32 40](https://github.com/user-attachments/assets/1ed3af36-e6ea-444d-bbd4-97a67013f53f)
+ Redis-backed caching for faster responses
 - Auto-generated API docs (Swagger + ReDoc)
 - Health and stats endpoints for monitoring
 - Sample data seeding from `Sample_Products.xlsx`
